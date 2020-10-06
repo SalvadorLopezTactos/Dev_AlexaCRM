@@ -1,7 +1,7 @@
 {
     "interactionModel": {
         "languageModel": {
-            "invocationName": "unifin",
+            "invocationName": "unifin prueba",
             "intents": [
                 {
                     "name": "AMAZON.CancelIntent",
@@ -2271,6 +2271,21 @@
                         "{inicio} región {variable} {masmenos} {colocado_vs_presupuesto} producto {producto} {preposicion_periodo} {mes} {preposicion_anio} {anio}",
                         "{inicio} región {variable} {masmenos} {colocado_vs_presupuesto} para el producto {producto} {preposicion_periodo} {mes} {preposicion_anio} {anio}",
                         "{inicio} región {variable} {masmenos} {colocado_vs_presupuesto} {preposicion_producto} producto {preposicion_periodo} {mes} {preposicion_anio} {anio}"
+                    ]
+                },
+                {
+                    "name": "FollowAsking",
+                    "slots": [
+                        {
+                            "name": "producto",
+                            "type": "producto"
+                        }
+                    ],
+                    "samples": [
+                        "y para {producto}",
+                        "para {producto}",
+                        "ahora de {producto}",
+                        "y de {producto}"
                     ]
                 }
             ],
