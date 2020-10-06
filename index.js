@@ -11,6 +11,8 @@ const DESGLOSE_GENERO_TOKEN = 'DESGLOSE_GENERO';
 const welcomeMessage		= 'Bienvenido! Para ver distintas distribuciones solo di: horizontal o vertical ';
 const exitSkillMessage 		= 'Adiós';
 const repromptOutput 		= 'Qué te gustaría ver?';
+var lastIntent = '';
+var lastParams;
 /** Fin mensajes **/
 
 /** Import de ficheros **/
@@ -29,129 +31,129 @@ require('./lib/RestAPI')();		//Fichero de funciones del Rest API
 	Es el handler disparado al arrancar el skill.
 **/
 const WelcomeHandler = {
-  canHandle(handlerInput) {    
+  canHandle(handlerInput) {
     const request = handlerInput.requestEnvelope.request;
-	
+
 	printTrace("Requet Type: "+request.type);
-	
+
     return request.type === 'LaunchRequest'
   },
   //Definida como asíncrona
   async handle(handlerInput) {
-	  
+
 	 //const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();		//Used for Dynamic Entities
-	 
+
    let speakOutput = getRandomSentence("inicio");
    let responseBuilder = handlerInput.responseBuilder;
-  	
+
 	supportDisplay = supportsDisplay(handlerInput);  	//Comprobar si el dispositivo soporta pantalla
-		
-	
+
+
 	/**
 	**	Lo primero que se hace es obtener la estructura de los cubos de trabajo.
 	**/
-	
+
 	//Llamar a Login
 	const login = await getSessionRequest();
-    
+
     console.log("Respuesta de Welcome Login: "+ login);
-	
+
 	if(login){		//Si Login Correcto
-	
+
 		//Get cube definition Afiliaciones
 		const responseString = await getCubeDefinition(cubeID);
-		
-				
+
+
 		if(responseString!=null){
-			CUBE_DEFINITION = JSON.parse(responseString);					
+			CUBE_DEFINITION = JSON.parse(responseString);
 		}
 		else
 			CUBE_DEFINITION = CUBE_DEFINITION_AUX;
-			
+
 			printTrace("Cube Definition: "+JSON.stringify(CUBE_DEFINITION));
-		
-		//Get Fecha máxima en el cubo	
-		//Por Ahora se obtiene la fecha del cubo 
+
+		//Get Fecha máxima en el cubo
+		//Por Ahora se obtiene la fecha del cubo
 		{
 			//Obtener el ID de las fechas de los cubos
 			var attId = getElementId(cubeID,ATTRIBUTE,ATT_MES);
 			var postData = {
-				"requestedObjects":{"attributes":[{"id":""+attId+""}]}							
+				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
-			
-			printTrace("PostData: "+JSON.stringify(postData));			
-			
-			
+
+			printTrace("PostData: "+JSON.stringify(postData));
+
+
 			const respuesta = await getData(cubeID,JSON.stringify(postData));
-			
+
 			/** Precalculo de fechas **/
 			max_fecha 	= getFechaMaxima(JSON.parse(respuesta));
 			max_mes 	= max_fecha.substring(4,6);
 			max_anio 	= max_fecha.substring(0,4);
 			max_fecha_anio_anterior= (parseInt(max_anio)-1).toString() + max_mes;
-			
+
 			//Mes anterior
 			var aux_month;
 			if(parseInt(max_mes)==1)	//Mes Enero --> Hay que poner diciembre
 				 max_fecha_mes_anterior = (parseInt(max_anio)-1).toString() +"12";
 			else{
 				aux_month = parseInt(max_mes)-1;	//restar uno
-				
+
 				if(aux_month<10)	max_fecha_mes_anterior = max_anio +"0"+aux_month.toString();
-				else	max_fecha_mes_anterior = max_anio + aux_month.toString();	
-			}			
+				else	max_fecha_mes_anterior = max_anio + aux_month.toString();
+			}
 			/** Fin Precalculo de fechas **/
-			
+
 			printTrace("MAX_FECHA: "+max_fecha+
 			"\nMAX_ANIO: "+max_anio+
 			"\nMAX_MES: "+max_mes+
 			"\nAÑO_ANTERIOR: "+max_fecha_anio_anterior+
 			"\nMES_ANTERIOR: "+max_fecha_mes_anterior);
-			
+
 		}
-		
+
 		//Get Listado de Productos.
 		//Se almacenan los productos en un array para después poder machear con las preguntas
 		{
 			//Obtener el ID de las fechas de los cubos
 			attId = getElementId(cubeID,ATTRIBUTE,ATT_PRODUCTO);
 			postData = {
-				"requestedObjects":{"attributes":[{"id":""+attId+""}]}							
+				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
-			
-			//printTrace("PostData: "+JSON.stringify(postData));			
-			
-			
+
+			//printTrace("PostData: "+JSON.stringify(postData));
+
+
 			const productos = await getData(cubeID,JSON.stringify(postData));
-			
+
 			//printTrace("Productos: "+JSON.stringify(productos));
-			
+
 			ARRAY_PRODUCTOS = guardarElementos(JSON.parse(productos));
-			ARRAY_PRODUCTOS.push(LIT_TODO,LIT_TODOS,LIT_TODAS);			
+			ARRAY_PRODUCTOS.push(LIT_TODO,LIT_TODOS,LIT_TODAS);
 
 			//print productos
 			for(var i=0;i<ARRAY_PRODUCTOS.length;i++){
 				printTrace("Producto: "+ARRAY_PRODUCTOS[i]);
 			}
 		}
-		
+
 		//Get Listado de Tipos de Operación.
 		//Se almacenan los tipos de operación en un array para después poder machear con las preguntas
 		{
 			//Obtener el ID de las fechas de los cubos
 			attId = getElementId(cubeID,ATTRIBUTE,ATT_TIPO_OPERACION);
 			postData = {
-				"requestedObjects":{"attributes":[{"id":""+attId+""}]}							
+				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
-			
-			//printTrace("PostData: "+JSON.stringify(postData));			
-			
-			
+
+			//printTrace("PostData: "+JSON.stringify(postData));
+
+
 			const operaciones = await getData(cubeID,JSON.stringify(postData));
-			
+
 			//printTrace("Tipos de Operación: "+JSON.stringify(operaciones));
-			
-			ARRAY_TIPO_OPERACION = guardarElementos(JSON.parse(operaciones));	
+
+			ARRAY_TIPO_OPERACION = guardarElementos(JSON.parse(operaciones));
 			ARRAY_TIPO_OPERACION.push(LIT_TODO,LIT_TODOS,LIT_TODAS);
 
 			/*print productos
@@ -159,58 +161,58 @@ const WelcomeHandler = {
 				printTrace("Producto: "+ARRAY_TIPO_OPERACION[i]);
 			}*/
 		}
-		
+
 		//Get Listado de Tipos de Crédito.
 		//Se almacenan los tipos de crédito en un array para después poder machear con las preguntas
 		{
 			//Obtener el ID de las fechas de los cubos
 			attId = getElementId(cubeID,ATTRIBUTE,ATT_TIPO_CREDITO);
 			postData = {
-				"requestedObjects":{"attributes":[{"id":""+attId+""}]}							
+				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
-			
-			//printTrace("PostData: "+JSON.stringify(postData));			
-			
-			
+
+			//printTrace("PostData: "+JSON.stringify(postData));
+
+
 			const tiposCredito = await getData(cubeID,JSON.stringify(postData));
-			
+
 			//printTrace("Tipos de Operación: "+JSON.stringify(tiposCredito));
-			
+
 			ARRAY_TIPO_CREDITO = guardarElementos(JSON.parse(tiposCredito));
-			ARRAY_TIPO_CREDITO.push(LIT_TODO,LIT_TODOS,LIT_TODAS);			
+			ARRAY_TIPO_CREDITO.push(LIT_TODO,LIT_TODOS,LIT_TODAS);
 
 			/*print productos
 			for(var i=0;i<ARRAY_TIPO_CREDITO.length;i++){
 				printTrace("Producto: "+ARRAY_TIPO_CREDITO[i]);
 			}*/
 		}
-		
+
 		//Get Listado de Regiones
 		//Se almacenan las regiones en un array para después poder machear con las preguntas
 		{
 			//Obtener el ID de las fechas de los cubos
 			attId = getElementId(cubeID,ATTRIBUTE,ATT_REGION);
 			postData = {
-				"requestedObjects":{"attributes":[{"id":""+attId+""}]}							
+				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
-			
-			//printTrace("PostData: "+JSON.stringify(postData));			
-			
-			
+
+			//printTrace("PostData: "+JSON.stringify(postData));
+
+
 			const regiones = await getData(cubeID,JSON.stringify(postData));
-			
+
 			//printTrace("Regiones: "+JSON.stringify(tiposCredito));
-			
+
 			ARRAY_REGIONES = guardarElementos(JSON.parse(regiones));
 			ARRAY_REGIONES.push(LIT_TODO,LIT_TODOS,LIT_TODAS);
-			
+
 			//Añadir Dynamic Entities
 			//if(!sessionAttributes['entities'])
 			//	sessionAttributes['entities'] = [];
-			
+
 			//for(var i=0;i<ARRAY_REGIONES.length;i++)
 			//	sessionAttributes['entities'].push(ARRAY_REGIONES[i]);
-			
+
 			//Añadir variables almacenadas en el array
 			/*
 			try{
@@ -226,42 +228,42 @@ const WelcomeHandler = {
 				printTrace("Región: "+ARRAY_REGIONES[i]);
 			}*/
 		}
-		
+
 		//Get Listado de eQUIPOS
 		//Se almacenan los elementos en un array para después poder machear con las preguntas
 		{
 			//Obtener el ID de las fechas de los cubos
 			attId = getElementId(cubeID,ATTRIBUTE,ATT_EQUIPO);
 			postData = {
-				"requestedObjects":{"attributes":[{"id":""+attId+""}]}							
+				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
-			
-			//printTrace("PostData: "+JSON.stringify(postData));			
-			
-			
+
+			//printTrace("PostData: "+JSON.stringify(postData));
+
+
 			const equipos = await getData(cubeID,JSON.stringify(postData));
-			
+
 			//printTrace("Tipos de Operación: "+JSON.stringify(tiposCredito));
-			
+
 			ARRAY_EQUIPOS = guardarElementos(JSON.parse(equipos));
 			ARRAY_EQUIPOS.push(LIT_TODO,LIT_TODOS,LIT_TODAS);
-			
+
 			/*print REGIONES
 			for(var i=0;i<ARRAY_REGIONES.length;i++){
 				printTrace("Región: "+ARRAY_REGIONES[i]);
 			}*/
 		}
-		
+
 		//Logout
-		await sessionLogout();			
-		
-		
+		await sessionLogout();
+
+
 	}
-	else{	//Si Login incorrecto se usan valores auxiliares		
-		CUBE_DEFINITION = CUBE_DEFINITION_AUX;					
-	}	
-	
-	//Devolver resultados	
+	else{	//Si Login incorrecto se usan valores auxiliares
+		CUBE_DEFINITION = CUBE_DEFINITION_AUX;
+	}
+
+	//Devolver resultados
 	return handlerInput.responseBuilder
 		  .speak(speakOutput)
 		  .reprompt(getRandomSentence("mas"))
@@ -342,48 +344,53 @@ const ErrorHandler = {
 };
 /** FIN de implementaciónde Hhandlers **/
 
-/**	Navegación 
+/**	Navegación
 **
-	Toda navegación comienza con la pregunta número de bajas. 
+	Toda navegación comienza con la pregunta número de bajas.
 	No es posible empezar una navegación con dos dimensiones(por ejemplo: número de bajas en madrid)
 **/
 
 /**
 	Handle General encargado de capturar todos los intents custom del skill
 **/
-const GeneralHandler = {	
-	
+const GeneralHandler = {
+
   canHandle(handlerInput) {
     const request = handlerInput.requestEnvelope.request;
-	
+
     return (
         request.type === 'IntentRequest' && acceptedIntent(request.intent.name)
     );
   },
   async handle(handlerInput) {
-	  
+
 	  const responseBuilder = handlerInput.responseBuilder;
-	  const request = handlerInput.requestEnvelope.request;	  
+	  const request = handlerInput.requestEnvelope.request;
 	  const intent = request.intent;
 	  var speechOutput = MSG_NO_HAY_DATOS;
 	  var parametros;
-	  var resultado = {};  
-	  
-	  try{	  	 
-		  
+	  var resultado = {};
+	  try{
 		  printTrace("Full request: "+JSON.stringify(request.intent));
-		  
+
 		  //limpiarNavegacion();
-		  petitionType = listadoIntents[request.intent.name];	//Set petition type		   
-		  
+		  petitionType = listadoIntents[request.intent.name];	//Set petition type
+
 		  printTrace("Intent Name: "+request.intent.name);
 		  printTrace("PetitionType: "+petitionType);
-		  
+
 		  if(petitionType!=GET_ULTIMA_RESPUESTA && petitionType!=GET_FRASE_ENTENDIDA){
-		  
-			  //Procesar petición para extraer parámetros
-			  parametros=extractParams(intent, petitionType);
-			  
+		  	if(request.intent.name=='FollowAsking' && lastIntent==GET_RESUMEN_PRODUCTO){
+		  		parametros = lastParams;
+		  		parametros.producto = request.intent.slots.producto.value.toUpperCase();
+		  		petitionType = GET_RESUMEN_PRODUCTO;
+		  	}else{
+		  		lastIntent = petitionType;
+				  //Procesar petición para extraer parámetros
+				  parametros=extractParams(intent, petitionType);
+				  lastParams = parametros;
+		  	}
+		  	
 			  /** Printar parámetros **/
 			  printTrace("** Parámetros extraidos **\n"+
 							"Mes :"+parametros.mes+"\n"+
@@ -395,73 +402,75 @@ const GeneralHandler = {
 							"NewIntentCode :"+parametros.newIntentCode+"\n"+
 							"Lumo :"+parametros.lumo+"\n"+
 							"Mas Menos :"+parametros.masmenos+"\n");
-						
+
 			  //Si la extracción ha sido correcta
 			  if(!parametros.error){
-			  
+
 				  //Forzar nuevo Intent para el caso de navegación de KPI
 				  if(petitionType == GET_KPI_NAV)
 					  petitionType = parametros.newIntentCode;
-					  
-				  
+
+
 				  var login = await getSessionRequest();
-					
+
 					console.log("Pregunta Normal: "+ parametros.producto);
-				
-					if(login){		
-					
+
+					if(login){
+
 						//Obtener el filter a enviar al API
 						var postData = getRequestFilter(petitionType,parametros,cubeID);
-						
+
 						console.log("PostData :"+JSON.stringify(postData));
-						
+
 						//Obtener los datos desde el API usando el filtro generado
-						var responseString= await getData(cubeID,postData);			
-					
+						var responseString= await getData(cubeID,postData);
+
 						//Procesar los resultados obtenidos del API
 						resultado = processRequest(petitionType, parametros, cubeID, responseString);
-						
-						console.log("Respuesta final :"+ JSON.stringify(resultado));				
-						
+
+						console.log("Respuesta final :"+ JSON.stringify(resultado));
+
 						//Generar respuesta hablada
 						if(!resultado.error)
-							speechOutput = procesarRespuesta(petitionType,resultado, parametros);		
+							speechOutput = procesarRespuesta(petitionType,resultado, parametros);
 						else
 							speechOutput = getRandomSentence("sin_datos");
-						
+
 						//Logout
 						await sessionLogout();
-						
-						
+
+
 					}//Login
 			  }
 			  else	//Errores durante la extracción
 			  {
-				 speechOutput = parametros.mensajeError; 
-				 
-			  }	
+				 speechOutput = parametros.mensajeError;
+
+			  }
 		  }
 		  else if(petitionType==GET_ULTIMA_RESPUESTA)
-				speechOutput = ULTIMA_RESPUESTA;	
+				speechOutput = ULTIMA_RESPUESTA;
 		  else if(petitionType==GET_FRASE_ENTENDIDA)
 			  speechOutput = "Esto fue lo que entendí.<break time=\"1s\"/> "+ULTIMA_FRASE_ENTENDIDA;
 	  }
 	  catch(error){
+	  	console.log('Eror General-catch1');
 		  printTrace('' + error.stack);
 		  speechOutput = getRandomSentence("sin_datos");
 	  }
-	  
+
 	  ULTIMA_RESPUESTA = speechOutput;
-		
+	  speechOutput = speechOutput + lastIntent;
+
 		return responseBuilder
 		  .speak(speechOutput)
 		  .reprompt(getRandomSentence("mas"))
-		  .getResponse();	  
+		  .getResponse();
   }
 }	//Cierre Handle General
 
 /**
-**	Fallback Intent para procesar todas aquellas 
+**	Fallback Intent para procesar todas aquellas
 **	peticiones que no cruzan con los intents.
 **/
 const FallbackHandler = {
@@ -505,7 +514,7 @@ function addDynamicEntities(responseBuilder, slotType, entities) {
     console.log(JSON.stringify(updateEntitiesDirective));
     responseBuilder.addDirective(updateEntitiesDirective);
 }
-	
+
 
 /** Este es el punto de entrada de todas las peticiones
 **	Se mira en todas las funciones definidas dentro de addRequestHandlers
@@ -517,7 +526,7 @@ exports.handler = skillBuilder
     ExitHandler,
     SessionEndedRequestHandler,
 	WelcomeHandler,
-	GeneralHandler,	
+	GeneralHandler,
 	FallbackHandler
 )
 //.addErrorHandlers(ErrorHandler)
