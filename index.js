@@ -121,7 +121,7 @@ const WelcomeHandler = {
 				"requestedObjects":{"attributes":[{"id":""+attId+""}]}
 			};
 
-			//printTrace("PostData: "+JSON.stringify(postData));
+			printTrace("PostData: "+JSON.stringify(postData));
 
 
 			const productos = await getData(cubeID,JSON.stringify(postData));
@@ -378,12 +378,31 @@ const GeneralHandler = {
 
 		  printTrace("Intent Name: "+request.intent.name);
 		  printTrace("PetitionType: "+petitionType);
+		  console.log(request.intent.name);
+		  console.log(petitionType);
 
 		  if(petitionType!=GET_ULTIMA_RESPUESTA && petitionType!=GET_FRASE_ENTENDIDA){
-		  	if(request.intent.name=='FollowAsking' && lastIntent==GET_RESUMEN_PRODUCTO){
+		  	if(request.intent.name=='FollowAsking'){
 		  		parametros = lastParams;
-		  		parametros.producto = request.intent.slots.producto.value.toUpperCase();
-		  		petitionType = GET_RESUMEN_PRODUCTO;
+		  	//Set Producto
+			  if (request.intent.slots.producto.value != undefined && request.intent.slots.producto.value != "") {
+			  parametros.producto = request.intent.slots.producto.value.toUpperCase();
+			  }
+			  //Set mes
+			  if (request.intent.slots.mes.value != undefined && request.intent.slots.mes.value != "") {
+			  parametros.mes = request.intent.slots.mes.value;
+			  }
+			  //Set Anio
+			  if (request.intent.slots.anio.value != undefined && request.intent.slots.anio.value != "") {
+			  parametros.anio = request.intent.slots.anio.value;
+			  }
+		  		console.log("Define petitionType");
+		  		petitionType = lastIntent;
+		  		console.log("Define nuevos parametros, mes y año");
+		  		console.log("Producto ",parametros.producto);
+		  		console.log("Mes ",parametros.mes);
+		  		console.log("Anio ",parametros.anio);
+		  		console.log("Ultimo intento",lastIntent);
 		  	}else{
 		  		lastIntent = petitionType;
 				  //Procesar petición para extraer parámetros
@@ -460,7 +479,7 @@ const GeneralHandler = {
 	  }
 
 	  ULTIMA_RESPUESTA = speechOutput;
-	  speechOutput = speechOutput + lastIntent;
+	  speechOutput = speechOutput;
 
 		return responseBuilder
 		  .speak(speechOutput)

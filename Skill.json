@@ -1,7 +1,7 @@
 {
     "interactionModel": {
         "languageModel": {
-            "invocationName": "unifin prueba",
+            "invocationName": "unifin crm",
             "intents": [
                 {
                     "name": "AMAZON.CancelIntent",
@@ -2279,13 +2279,26 @@
                         {
                             "name": "producto",
                             "type": "producto"
+                        },
+                        {
+                            "name": "continua_pregunta",
+                            "type": "continua_pregunta"
+                        },
+                        {
+                            "name": "mes",
+                            "type": "mes"
+                        },
+                        {
+                            "name": "preposicion_periodo",
+                            "type": "preposicion_mes"
                         }
                     ],
                     "samples": [
-                        "y para {producto}",
-                        "para {producto}",
-                        "ahora de {producto}",
-                        "y de {producto}"
+                        "{continua_pregunta} {preposicion_periodo} {mes}",
+                        "{continua_pregunta} {producto} {preposicion_periodo} {mes}",
+                        "{continua_pregunta} producto {producto}",
+                        "{continua_pregunta} producto {producto} {preposicion_periodo} {mes}",
+                        "{continua_pregunta} {producto}"
                     ]
                 }
             ],
@@ -3841,6 +3854,31 @@
                         {
                             "name": {
                                 "value": "del"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "continua_pregunta",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "y de"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "para"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "ahora de "
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "y para"
                             }
                         }
                     ]
