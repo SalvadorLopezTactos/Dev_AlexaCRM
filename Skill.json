@@ -2291,9 +2291,19 @@
                         {
                             "name": "preposicion_periodo",
                             "type": "preposicion_mes"
+                        },
+                        {
+                            "name": "anio",
+                            "type": "anio"
+                        },
+                        {
+                            "name": "preposicion_anio",
+                            "type": "preposicion_anio"
                         }
                     ],
                     "samples": [
+                        "{continua_pregunta} producto  {producto} {preposicion_periodo} {mes} {preposicion_anio} {anio}",
+                        "{continua_pregunta} {preposicion_anio} {anio}",
                         "{continua_pregunta} {preposicion_periodo} {mes}",
                         "{continua_pregunta} {producto} {preposicion_periodo} {mes}",
                         "{continua_pregunta} producto {producto}",
@@ -3861,6 +3871,11 @@
                 {
                     "name": "continua_pregunta",
                     "values": [
+                        {
+                            "name": {
+                                "value": "y"
+                            }
+                        },
                         {
                             "name": {
                                 "value": "y de"
