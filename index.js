@@ -247,11 +247,17 @@ const WelcomeHandler = {
 
 			ARRAY_EQUIPOS = guardarElementos(JSON.parse(equipos));
 			ARRAY_EQUIPOS.push(LIT_TODO,LIT_TODOS,LIT_TODAS);
+			
+			printTrace("VALOR EQUIPOS ARRAY" +ARRAY_EQUIPOS);
+			printTrace(" EQUIPOS " +equipos);
 
-			/*print REGIONES
-			for(var i=0;i<ARRAY_REGIONES.length;i++){
-				printTrace("Región: "+ARRAY_REGIONES[i]);
-			}*/
+			//print REGIONES
+			for(var i=0;i<ARRAY_EQUIPOS.length;i++){
+					ARRAY_EQUIPOS[i].split(" ");
+				printTrace("VALOR EQUIPOS ARRAY NUEVOS: " +ARRAY_EQUIPOS[i]);
+				//printTrace("EQUIPO: "+ARRAY_EQUIPOS[i]);
+				//printTrace("EQUIPO MOD: "+arreglo);
+			}
 		}
 
 		//Logout
@@ -443,6 +449,7 @@ const GeneralHandler = {
 
 						//Obtener los datos desde el API usando el filtro generado
 						var responseString= await getData(cubeID,postData);
+						printTrace("RESPONSESTING: "+responseString)
 
 						//Procesar los resultados obtenidos del API
 						resultado = processRequest(petitionType, parametros, cubeID, responseString);
